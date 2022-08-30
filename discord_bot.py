@@ -21,6 +21,7 @@ interval_listings = int(config.get("SETTINGS", "INTERVAL_LISTINGS"))
 interval_status = int(config.get("SETTINGS", "INTERVAL_STATUS"))
 status_type = config.get("SETTINGS", "STATUS_TYPE")
 command_prefix = config.get("SETTINGS", "COMMAND_PREFIX")
+api_key = config.get("SETTINGS", "API_KEY")
 
 default_image = "https://storage.googleapis.com/opensea-static/Logomark/Logomark-Blue.png"
 
@@ -188,8 +189,6 @@ async def get_events(type):
 
         url = "https://api.opensea.io/api/v1/events?"
         params = {
-            'offset': '0',
-            'limit': '25',
             'event_type': event_type,
             'only_opensea': 'true',
             'collection_slug': collection_slug
@@ -286,7 +285,6 @@ async def send_event_message(event: dict, event_type):
         message.add_field(name='Seller', value=seller_name, inline=False)
         if event_type == 'sales' : message.add_field(name='Buyer', value=buyer_name, inline=False)
         for trait in trait_message_data:            
-            #message.add_field(name=trait.title(), value=trait_message_data[trait], inline=True)
             message.add_field(name=trait[0], value=trait[1], inline=True)
         if event_type == 'sales' : channel = await bot.fetch_channel(int(config.get("SETTINGS", "DISCORD_CHANNEL_ID_SALES")))
         if event_type == 'listings' : channel = await bot.fetch_channel(int(config.get("SETTINGS", "DISCORD_CHANNEL_ID_LISTINGS")))
@@ -337,9 +335,10 @@ async def get_data(url: str, params: dict = {}):
     try:
         print(time.strftime("%Y-%m-%d %H:%M:%S") + ": Fetching:" + url + " | Parameters: " + str(params))
         fail_count = 0
+        headers = {"X-API-KEY": api_key}
         while fail_count < 3:
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, params=params) as response:
+                async with session.get(url, params=params, headers=headers) as response:
                     if response.ok:
                         JSON_response = await response.json()
                         print(time.strftime("%Y-%m-%d %H:%M:%S") + ": Successful response. Length:" + str(len(str(JSON_response))))
